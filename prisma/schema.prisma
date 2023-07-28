@@ -1,0 +1,98 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider          = "postgresql"
+  url               = env("POSTGRES_PRISMA_URL") // uses connection pooling
+  directUrl         = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
+  shadowDatabaseUrl = env("POSTGRES_URL_NON_POOLING") // used for migrations
+}
+
+model User {
+  id                Int        @id @default(autoincrement())
+  name              String
+  phone             String     @unique
+  primary_address   String
+  secondary_address String
+  email             String
+  created_at        DateTime   @default(now())
+  updated_at        DateTime   @updatedAt
+  user_type         UserType
+  shipments         Shipment[]
+  orders            Order[]
+  payments          Payment[]
+}
+
+model Product {
+  id           Int           @id @default(autoincrement())
+  product_name String
+  sku          String
+  unit_price   Float
+  spec         String
+  description  String
+  created_at   DateTime      @default(now())
+  updated_at   DateTime      @updatedAt
+  images       String
+  stock        Int
+  ordered_item OrderedItem[]
+}
+
+model Order {
+  id           Int           @id @default(autoincrement())
+  created_at   DateTime      @default(now())
+  updated_at   DateTime      @updatedAt
+  customer_id  Int
+  customer     User          @relation(fields: [customer_id], references: [id])
+  payment_id   Int
+  shipment_id  Int
+  shipment     Shipment      @relation(fields: [shipment_id], references: [id])
+  ordered_item OrderedItem[]
+}
+
+model OrderedItem {
+  id         Int      @id @default(autoincrement())
+  quantity   Int
+  price      Float
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  order_id   Int
+  order      Order    @relation(fields: [order_id], references: [id])
+  product_id Int
+  product    Product  @relation(fields: [product_id], references: [id])
+}
+
+model Shipment {
+  id          Int      @id @default(autoincrement())
+  address     String
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  customer_id Int
+  customer    User[]
+  orders      Order[]
+}
+
+model Payment {
+  id          Int         @id @default(autoincrement())
+  method      PaymentType
+  reference   String
+  created_at  DateTime    @default(now())
+  upated_at   DateTime    @updatedAt
+  customer_id Int
+  customer    User        @relation(fields: [customer_id], references: [id])
+}
+
+enum UserType {
+  CUSTOMER
+  ADMIN
+}
+
+enum PaymentType {
+  BKASH
+  NOGOD
+  CREDIT
+  DEBIT
+}
